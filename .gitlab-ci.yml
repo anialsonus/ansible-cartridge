@@ -1,26 +1,45 @@
 ---
 variables:
+  TEST_IMAGE: registry.gitlab.com/tarantool/enterprise/ansible-cartridge
   BUNDLE_VERSION: 1.10.3-93-g580699f
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
 
 stages:
+  - prebuild
   - test
 
+docker-build-base:
+  image: null
+  stage: prebuild
+  tags:
+    - shell
+  only:
+    changes:
+      - Dockerfile.test
+      - .gitlab-ci.yml
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${TEST_IMAGE} || true
+    - >
+      docker build
+      -t ${TEST_IMAGE}
+      -f Dockerfile
+      .
+    - docker push ${TEST_IMAGE}
+  after_script:
+    - docker logout registry.gitlab.com
+
 default:
-  image: docker:git
+  image: ${TEST_IMAGE}
   services:
     - name: docker:dind
       alias: localhost
 
   before_script:
-    - apk update && apk add --no-cache docker
-      python3-dev py3-pip docker gcc git curl build-base
-      autoconf automake py3-cryptography linux-headers
-      musl-dev libffi-dev openssl-dev openssh bash
     - docker info
     - python3 --version
-    - pip3 install ansible molecule docker
     - ansible --version
 
 test-enterprise:
