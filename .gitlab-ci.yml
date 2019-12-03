@@ -55,7 +55,7 @@ docker-build-base:
     - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
 
     - >
-      if [ ! packages/${TARANTOOL_VERSION} ]; then
+      if [ ! -f packages/${TARANTOOL_VERSION} ]; then
         TARANTOOL_VERSION=${TARANTOOL_VERSION} ./create-packages.sh
         mkdir -p packages/${TARANTOOL_VERSION}
         cp *.deb *.rpm packages/${TARANTOOL_VERSION}
