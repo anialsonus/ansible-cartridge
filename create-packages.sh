@@ -2,9 +2,6 @@
 
 set -e
 
-mkdir packages || true
-rm packages/* || true
-
 tarantool_version=${TARANTOOL_VERSION:-opensource-1.10}
 dockerfile_suffix=opensource
 
@@ -21,21 +18,21 @@ then
     tarantool_repo=tarantool/1_10
 fi
 
-IMAGE=${tarantool_version}-packages-builder
-CONTAINER=${IMAGE}-container
+image=${tarantool_version}-packages-builder
+container=${image}-container
 
 echo "Build packages for ${tarantool_version}"
 
-docker rm ${CONTAINER} || true
+docker rm ${container} || true
 
 docker build --build-arg TARANTOOL_DOWNLOAD_TOKEN=${TARANTOOL_DOWNLOAD_TOKEN} \
              --build-arg BUNDLE_VERSION=${BUNDLE_VERSION} \
              --build-arg TARANTOOL_REPO=${tarantool_repo} \
-             -t ${IMAGE} \
+             -t ${image} \
              -f Dockerfile.${dockerfile_suffix} \
-             -t ${IMAGE} .
+             -t ${image} .
 
-docker create --name ${CONTAINER} ${IMAGE} usr/bin/true
-docker cp ${CONTAINER}:/opt/myapp/myapp-1.0.0-0.rpm .
-docker cp ${CONTAINER}:/opt/myapp/myapp-1.0.0-0.deb .
-docker rm ${CONTAINER}
+docker create --name ${container} ${image} usr/bin/true
+docker cp ${container}:/opt/myapp/myapp-1.0.0-0.rpm .
+docker cp ${container}:/opt/myapp/myapp-1.0.0-0.deb .
+docker rm ${container}
