@@ -64,4 +64,4 @@ test-opensource-1.10:
 test-opensource-2.2:
   <<: *test-template
   variables:
-    TARANTOOL_VERSION: test-opensource-2.2
+    TARANTOOL_VERSION: opensource-2.2
