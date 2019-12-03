@@ -2,12 +2,18 @@
 variables:
   TEST_IMAGE: registry.gitlab.com/tarantool/enterprise/ansible-cartridge
   BUNDLE_VERSION: 1.10.3-93-g580699f
+  CARTRIDGE_CLI_VERSION: 1.2.1
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
 
 stages:
   - prebuild
   - test
+
+cache:
+  key: ${CARTRIDGE_CLI_VERSION}-${BUNDLE_VERSION}
+  paths:
+    - packages/
 
 docker-build-base:
   stage: prebuild
@@ -48,7 +54,14 @@ docker-build-base:
     - cd .. && (rm -rf tarantool-cartridge || true)
     - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
 
-    - TARANTOOL_VERSION=${TARANTOOL_VERSION} ./create-packages.sh
+    - >
+      if [ ! packages/${TARANTOOL_VERSION} ]; then
+        TARANTOOL_VERSION=${TARANTOOL_VERSION} ./create-packages.sh
+        mkdir -p packages/${TARANTOOL_VERSION}
+        cp *.deb *.rpm packages/${TARANTOOL_VERSION}
+      else
+        cp packages/${TARANTOOL_VERSION}/* .
+      fi
     - molecule test
 
 test-enterprise:
