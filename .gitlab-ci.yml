@@ -25,7 +25,7 @@ docker-build-base:
     - >
       docker build
       -t ${TEST_IMAGE}
-      -f Dockerfile
+      -f Dockerfile.test
       .
     - docker push ${TEST_IMAGE}
   after_script:
