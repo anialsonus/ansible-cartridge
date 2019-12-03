@@ -10,7 +10,6 @@ stages:
   - test
 
 docker-build-base:
-  image: null
   stage: prebuild
   tags:
     - shell
@@ -31,52 +30,38 @@ docker-build-base:
   after_script:
     - docker logout registry.gitlab.com
 
-default:
+.test-template: &test-template
+  stage: test
+  tags:
+    - molecule-dind
   image: ${TEST_IMAGE}
   services:
     - name: docker:dind
       alias: localhost
-
   before_script:
     - docker info
     - python3 --version
     - ansible --version
+  script:
+    - ./linter.sh
+
+    - cd .. && (rm -rf tarantool-cartridge || true)
+    - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
+
+    - TARANTOOL_VERSION=${TARANTOOL_VERSION} ./create-packages.sh
+    - molecule test
 
 test-enterprise:
-  stage: test
-  tags:
-    - molecule-dind
-  script:
-    - ./linter.sh
-
-    - cd .. && (rm -rf tarantool-cartridge || true)
-    - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
-
-    - TARANTOOL_VERSION=enterprise ./create-packages.sh
-    - molecule test
+  <<: *test-template
+  variables:
+    TARANTOOL_VERSION: enterprise
 
 test-opensource-1.10:
-  stage: test
-  tags:
-    - molecule-dind
-  script:
-    - ./linter.sh
-
-    - cd .. && (rm -rf tarantool-cartridge || true)
-    - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
-
-    - TARANTOOL_VERSION=opensource-1.10 ./create-packages.sh
-    - molecule test
+  <<: *test-template
+  variables:
+    TARANTOOL_VERSION: opensource-1.10
 
 test-opensource-2.2:
-  stage: test
-  tags:
-    - molecule-dind
-  script:
-    - ./linter.sh
-
-    - cd .. && (rm -rf tarantool-cartridge || true)
-    - cp -R ansible-cartridge tarantool-cartridge && cd tarantool-cartridge
-
-    - TARANTOOL_VERSION=opensource-2.2 ./create-packages.sh
-    - molecule test
+  <<: *test-template
+  variables:
+    TARANTOOL_VERSION: test-opensource-2.2
