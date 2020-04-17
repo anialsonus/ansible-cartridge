@@ -285,7 +285,7 @@ end
 Next, install the Tarantool Cartridge role using `ansible-galaxy` CLI:
 
 ```bash
-$ ansible-galaxy install tarantool.cartridge,1.0.4
+$ ansible-galaxy install tarantool.cartridge,1.2.0
 ```
 
 
@@ -301,6 +301,7 @@ and import the Tarantool Cartridge role.
   hosts: all
   become: true
   become_user: root
+  any_errors_fatal: true
   tasks:
   - name: Import Tarantool Cartridge role
     import_role:

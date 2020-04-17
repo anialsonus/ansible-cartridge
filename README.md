@@ -39,7 +39,7 @@ Note that this role requires [root access](https://docs.ansible.com/ansible/2.4/
 First, you need to install this role using `ansible-galaxy`:
 
 ```bash
-$ ansible-galaxy install tarantool.cartridge,1.0.4
+$ ansible-galaxy install tarantool.cartridge,1.2.0
 ```
 
 Example cluster topology:
@@ -56,6 +56,7 @@ To deploy an application and set up this topology:
   hosts: all
   become: true
   become_user: root
+  any_errors_fatal: true
   tasks:
   - name: Import Tarantool Cartridge role
     import_role:
@@ -134,8 +135,6 @@ all:
       vars:
         # replicaset configuration
         replicaset_alias: core-1
-        failover_priority:
-          - core-1  # leader
         roles:
           - 'app.roles.custom'
           - 'vshard-router'
@@ -166,6 +165,7 @@ Configuration format is described in detail in the
 * `cartridge_failover` (`boolean`, optional): boolean flag that indicates if
   failover should be enabled or disabled;
 * `cartridge_app_config` (`dict`, optional): application config sections to patch;
+* `cartridge_auth`: (`dict`, optional): [authorization configuration](#cartridge-authorization);
 * `cartridge_enable_tarantool_repo` (`boolean`, optional, default: `true`):
   indicates if the Tarantool repository should be enabled (for packages with
   open-source Tarantool dependency);
@@ -174,7 +174,7 @@ Configuration format is described in detail in the
 * `expelled` (`boolean`, optional, default: `false`): boolean flag that indicates if instance must be expelled from topology;
 * `instance_start_timeout` (`number`, optional, default: 60): time in seconds to wait for instance to be started;
 * `replicaset_alias` (`string`, optional): replicaset alias, will be displayed in Web UI;
-* `failover_priority` (`list-of-string`, required if `replicaset_alias` specified): failover priority;
+* `failover_priority` (`list-of-string`): failover priority;
 * `roles` (`list-of-strings`, required if `replicaset_alias` specified): roles to be enabled on the replicaset;
 * `all_rw` (`boolean`, optional): indicates that that all servers in the replicaset should be read-write;
 * `weight` (`number`, optional): vshard replicaset weight (matters only if `vshard-storage` role is enabled.
@@ -276,6 +276,12 @@ You can specify path to the rpm package to be installed using
 `cartridge_package_path`.
 Note, that `cartridge_package_path` must be the same for instances on one machine.
 
+This role does not allow package downgrades because this may drive the cluster
+inoperative.
+If you are sure that you need to downgrade package and you are aware of the risks,
+you can perform this action manually (for example, using Ansible
+[yum](https://docs.ansible.com/ansible/latest/modules/yum_module.html) module).
+
 You should specify `cartridge_app_name` to allow Ansible to manage application correctly.
 
 ### Instances
@@ -324,7 +330,7 @@ You can find more details about replicasets and automatic failover in [Tarantool
 To configure replicasets you need to specify replicaset parameters for each instance in replicaset:
 
 * `replicaset_alias` (`string`, optional) - replicaset alias, will be displayed in Web UI;
-* `failover_priority` (`list-of-strings`, required if `replicaset_alias` specified) - failover prioriry order.
+* `failover_priority` (`list-of-strings`, optional) - failover prioriry order.
   First instance will be replicaset leader.
   It isn't required to specify all instances here, you can specify only one or more.
   Other instances will have lower priority;
@@ -372,7 +378,6 @@ cartridge.cfg({
         hot-storage:
       vars:
         replicaset_alias: hot-storage
-        failover_priority: [hot-storage]
         roles: [vshard-storage]
         vshard_group: hot
 ```
